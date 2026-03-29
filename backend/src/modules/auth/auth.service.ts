@@ -119,9 +119,15 @@ export class AuthService {
             }
 
             const auth = await this.buildAuthResponse(user);
-            const verification = await this.ensureVerificationEmailSent(user);
+            const verification = this.requireEmailVerified
+                ? await this.ensureVerificationEmailSent(user)
+                : {
+                    required: false,
+                    sent: false,
+                    delivery: 'not_required',
+                };
 
-            if (verification.required && !verification.sent) {
+            if (this.requireEmailVerified && verification.required && !verification.sent) {
                 throw this.badRequest(
                     'EMAIL_DELIVERY_FAILED',
                     'Verification email could not be sent. Check email provider settings and try again.',
