@@ -67,7 +67,7 @@ npm run start:prod
 1. Create a service from this repo
 2. Set the service root directory to `backend`
 3. Add the environment variables from `/Users/shrutigitte/Desktop/SOS/backend/.env.example`
-4. Use `/Users/shrutigitte/Desktop/SOS/backend/railway.toml` as the deploy config
+4. In Railway settings, point the config file path to `/backend/railway.toml`
 5. Confirm the health check passes at `/api/health`
 
 ## Frontend (Cloudflare Pages)
