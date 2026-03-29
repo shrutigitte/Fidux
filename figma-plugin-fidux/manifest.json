@@ -1,0 +1,21 @@
+{
+  "name": "Fidux",
+  "id": "fidux-local-dev-plugin",
+  "api": "1.0.0",
+  "editorType": ["figma"],
+  "main": "code.js",
+  "ui": "ui.html",
+  "networkAccess": {
+    "allowedDomains": [
+      "https://5e055b250db57e6a8c3bc06b7bab723b.r2.cloudflarestorage.com",
+      "https://*.r2.cloudflarestorage.com",
+      "https://*.r2.dev"
+    ],
+    "devAllowedDomains": [
+      "http://localhost:3002",
+      "https://5e055b250db57e6a8c3bc06b7bab723b.r2.cloudflarestorage.com",
+      "https://*.r2.cloudflarestorage.com",
+      "https://*.r2.dev"
+    ]
+  }
+}

@@ -1,0 +1,458 @@
+openapi: 3.1.0
+info:
+  title: DesignFlow MVP API
+  version: 1.1.0
+  description: |
+    Contract derived from finalized MVP decisions.
+    All error responses use the standard ErrorEnvelope schema.
+servers:
+  - url: https://api.designflow.example.com
+security:
+  - SessionBearer: []
+
+components:
+  securitySchemes:
+    SessionBearer:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    PatBearer:
+      type: http
+      scheme: bearer
+      bearerFormat: PAT
+  parameters:
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      schema:
+        type: string
+        format: uuid
+  schemas:
+    ErrorEnvelope:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+            details:
+              type: object
+              additionalProperties: true
+    IssueStatus:
+      type: string
+      enum: [TODO, IN_PROGRESS, REVIEW, DONE]
+    IssuePriority:
+      type: string
+      enum: [LOW, MEDIUM, HIGH]
+    ProjectRole:
+      type: string
+      enum: [PROJECT_ADMIN, PROJECT_MEMBER, PROJECT_VIEWER]
+    PluginVerifyResponse:
+      type: object
+      required: [userId, orgId, scopes, expiresAt]
+      properties:
+        userId:
+          type: string
+        orgId:
+          type: string
+        scopes:
+          type: array
+          items:
+            type: string
+        expiresAt:
+          type: string
+          format: date-time
+    PluginProjectsResponse:
+      type: object
+      required: [projects]
+      properties:
+        projects:
+          type: array
+          items:
+            type: object
+            required: [id, name, role]
+            properties:
+              id:
+                type: string
+              name:
+                type: string
+              role:
+                $ref: '#/components/schemas/ProjectRole'
+    PluginCreateIssueRequest:
+      type: object
+      required:
+        - projectId
+        - title
+        - priority
+        - figmaFileKey
+        - nodeId
+        - nodeName
+        - thumbnail
+      properties:
+        projectId:
+          type: string
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        description:
+          type: string
+          nullable: true
+        priority:
+          $ref: '#/components/schemas/IssuePriority'
+        figmaFileKey:
+          type: string
+        nodeId:
+          type: string
+        nodeName:
+          type: string
+        thumbnail:
+          type: object
+          required: [contentType, sizeBytes]
+          properties:
+            contentType:
+              type: string
+              enum: [image/png, image/jpeg]
+            sizeBytes:
+              type: integer
+              minimum: 1
+              maximum: 5242880
+    PluginCreateIssueResponse:
+      type: object
+      required: [issue, upload]
+      properties:
+        issue:
+          type: object
+          required: [id, title, status, version]
+          properties:
+            id:
+              type: string
+            title:
+              type: string
+            status:
+              $ref: '#/components/schemas/IssueStatus'
+            version:
+              type: integer
+        upload:
+          type: object
+          required: [objectKey, url, method, headers, expiresInSeconds]
+          properties:
+            objectKey:
+              type: string
+            url:
+              type: string
+              format: uri
+            method:
+              type: string
+              enum: [PUT]
+            headers:
+              type: object
+              additionalProperties:
+                type: string
+            expiresInSeconds:
+              type: integer
+    PluginCompleteThumbnailRequest:
+      type: object
+      required: [objectKey]
+      properties:
+        objectKey:
+          type: string
+    PluginCompleteThumbnailResponse:
+      type: object
+      required: [thumbnailUrl]
+      properties:
+        thumbnailUrl:
+          type: string
+          format: uri
+    BoardIssuesResponse:
+      type: object
+      required: [issues]
+      properties:
+        issues:
+          type: array
+          items:
+            type: object
+            required: [id, title, status, version]
+            properties:
+              id:
+                type: string
+              title:
+                type: string
+              status:
+                $ref: '#/components/schemas/IssueStatus'
+              version:
+                type: integer
+    MoveIssueRequest:
+      type: object
+      required: [toStatus, expectedVersion]
+      properties:
+        toStatus:
+          $ref: '#/components/schemas/IssueStatus'
+        expectedVersion:
+          type: integer
+          minimum: 1
+    MoveIssueResponse:
+      type: object
+      required: [issue]
+      properties:
+        issue:
+          type: object
+          required: [id, status, version, updatedAt]
+          properties:
+            id:
+              type: string
+            status:
+              $ref: '#/components/schemas/IssueStatus'
+            version:
+              type: integer
+            updatedAt:
+              type: string
+              format: date-time
+    VersionConflictResponse:
+      type: object
+      required: [error, current]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code:
+              type: string
+              enum: [VERSION_CONFLICT]
+            message:
+              type: string
+        current:
+          type: object
+          required: [id, status, version]
+          properties:
+            id:
+              type: string
+            status:
+              $ref: '#/components/schemas/IssueStatus'
+            version:
+              type: integer
+    CreateMessageRequest:
+      type: object
+      required: [content]
+      properties:
+        content:
+          type: string
+          minLength: 1
+          maxLength: 4000
+    CreateMessageResponse:
+      type: object
+      required: [message]
+      properties:
+        message:
+          type: object
+          required: [id, content, createdAt]
+          properties:
+            id:
+              type: string
+            content:
+              type: string
+            createdAt:
+              type: string
+              format: date-time
+
+paths:
+  /api/plugin/pats/verify:
+    post:
+      summary: Verify plugin PAT
+      description: Rate limit 30/min per token + IP.
+      security:
+        - PatBearer: []
+      responses:
+        '200':
+          description: PAT is valid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PluginVerifyResponse'
+        '401':
+          description: Invalid or expired token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+
+  /api/plugin/projects:
+    get:
+      summary: List projects available to PAT
+      description: Rate limit 60/min per token + IP.
+      security:
+        - PatBearer: []
+      parameters:
+        - name: orgId
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Accessible projects
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PluginProjectsResponse'
+        '403':
+          description: Missing scope or org mismatch
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+
+  /api/plugin/issues:
+    post:
+      summary: Create issue from plugin selection
+      description: |
+        Requires scope plugin:write_issues and project role >= PROJECT_MEMBER.
+        Idempotency window is 24h.
+        Rate limit 20/min per token + IP.
+      security:
+        - PatBearer: []
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PluginCreateIssueRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PluginCreateIssueResponse'
+        '409':
+          description: Idempotency key reused with different payload
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+
+  /api/plugin/issues/{issueId}/thumbnail/complete:
+    post:
+      summary: Complete thumbnail upload after storage PUT
+      description: |
+        Server verifies key prefix, content type, and size <= 5MB.
+        Rate limit 30/min per token + IP.
+      security:
+        - PatBearer: []
+      parameters:
+        - name: issueId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PluginCompleteThumbnailRequest'
+      responses:
+        '200':
+          description: Thumbnail accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PluginCompleteThumbnailResponse'
+        '400':
+          description: Invalid object key/type/size
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+
+  /api/projects/{projectId}/issues:
+    get:
+      summary: List issues for board view
+      description: Role PROJECT_VIEWER and above.
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: status
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/IssueStatus'
+        - name: assignee
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Board issues
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BoardIssuesResponse'
+        '403':
+          description: Missing project membership
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+
+  /api/issues/{issueId}/move:
+    post:
+      summary: Move issue between board statuses
+      description: |
+        Role PROJECT_MEMBER and above.
+        Uses optimistic concurrency with expectedVersion.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MoveIssueRequest'
+      responses:
+        '200':
+          description: Moved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MoveIssueResponse'
+        '409':
+          description: Version mismatch
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VersionConflictResponse'
+
+  /api/issues/{issueId}/messages:
+    post:
+      summary: Send issue chat message
+      description: Role PROJECT_MEMBER and above. Viewers are read only.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateMessageRequest'
+      responses:
+        '201':
+          description: Message created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateMessageResponse'
+        '403':
+          description: Not allowed for viewer role
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'

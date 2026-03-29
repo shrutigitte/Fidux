@@ -1,0 +1,245 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum OrgRole {
+  ORG_OWNER
+  ORG_ADMIN
+  ORG_MEMBER
+}
+
+enum ProjectRole {
+  PROJECT_ADMIN
+  PROJECT_MEMBER
+  PROJECT_VIEWER
+}
+
+enum IssueStatus {
+  TODO
+  IN_PROGRESS
+  REVIEW
+  DONE
+}
+
+enum IssuePriority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum ActivityEntityType {
+  ISSUE
+  PROJECT
+  ORG
+  MEMBERSHIP
+}
+
+enum ActivityAction {
+  ISSUE_CREATED
+  ISSUE_STATUS_CHANGED
+  ISSUE_ASSIGNEE_CHANGED
+  ISSUE_PRIORITY_CHANGED
+  ISSUE_TITLE_CHANGED
+  PROJECT_CREATED
+  MEMBER_INVITED
+  MEMBER_ROLE_CHANGED
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  imageUrl  String?
+  passwordHash String?
+  googleSub String? @unique
+  emailVerifiedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  orgMemberships     OrgMembership[]
+  projectMemberships ProjectMembership[]
+  issuesAssigned     Issue[]                  @relation("IssueAssignee")
+  issuesArchived     Issue[]                  @relation("IssueArchivedBy")
+  messagesSent       Message[]
+  activities         ActivityLog[]            @relation("ActivityActor")
+  personalTokens     PersonalAccessToken[]
+
+  @@index([createdAt])
+}
+
+model Organization {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  memberships OrgMembership[]
+  projects    Project[]
+  patTokens   PersonalAccessToken[]
+
+  @@index([createdAt])
+}
+
+model OrgMembership {
+  id        String   @id @default(cuid())
+  orgId     String
+  userId    String
+  role      OrgRole
+  createdAt DateTime @default(now())
+
+  org  Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  user User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([orgId, userId])
+  @@index([userId])
+  @@index([orgId, role])
+}
+
+model Project {
+  id        String   @id @default(cuid())
+  orgId     String
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  org         Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  memberships ProjectMembership[]
+  issues      Issue[]
+  messages    Message[]
+  activities  ActivityLog[]
+
+  @@index([orgId, createdAt])
+  @@unique([orgId, name])
+}
+
+model ProjectMembership {
+  id        String      @id @default(cuid())
+  projectId String
+  userId    String
+  role      ProjectRole
+  createdAt DateTime    @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, userId])
+  @@index([userId])
+  @@index([projectId, role])
+}
+
+model Issue {
+  id            String        @id @default(cuid())
+  projectId     String
+  title         String
+  description   String?
+  status        IssueStatus   @default(TODO)
+  priority      IssuePriority @default(MEDIUM)
+  assigneeId    String?
+  archivedAt    DateTime?
+  archivedById  String?
+  archivedReason String?
+  version       Int           @default(1)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  figmaFileKey  String?
+  figmaNodeId   String?
+  figmaNodeName String?
+  figmaDeepLink String?
+  thumbnailKey  String?
+  thumbnailUrl  String?
+
+  project  Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  assignee User?   @relation("IssueAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+  archivedBy User? @relation("IssueArchivedBy", fields: [archivedById], references: [id], onDelete: SetNull)
+
+  messages   Message[]
+
+  @@index([projectId, status])
+  @@index([assigneeId, status])
+  @@index([projectId, updatedAt])
+  @@index([projectId, archivedAt, updatedAt])
+  @@index([archivedAt])
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  projectId String
+  issueId   String?
+  senderId  String
+  content   String
+  createdAt DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  issue   Issue?  @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  sender  User    @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([projectId, createdAt])
+  @@index([issueId, createdAt])
+  @@index([senderId, createdAt])
+}
+
+model ActivityLog {
+  id         String             @id @default(cuid())
+  projectId  String?
+  actorId    String
+  entityType ActivityEntityType
+  entityId   String
+  action     ActivityAction
+  payload    Json
+  createdAt  DateTime           @default(now())
+
+  project Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  actor   User     @relation("ActivityActor", fields: [actorId], references: [id], onDelete: Cascade)
+
+  @@index([projectId, createdAt])
+  @@index([actorId, createdAt])
+  @@index([entityType, entityId, createdAt])
+}
+
+model PersonalAccessToken {
+  id          String   @id @default(cuid())
+  orgId       String
+  userId      String
+  name        String
+  tokenHash   String   @unique
+  tokenSalt   String
+  scopes      String[]
+  createdAt   DateTime @default(now())
+  lastUsedAt  DateTime?
+  expiresAt   DateTime
+  revokedAt   DateTime?
+  graceUntil  DateTime?
+
+  org                 Organization             @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  user                User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  idempotencyRecords  PluginIdempotencyRecord[]
+
+  @@index([orgId, userId])
+  @@index([expiresAt])
+  @@index([revokedAt])
+}
+
+// Stores 24h idempotency window for plugin issue creation.
+model PluginIdempotencyRecord {
+  id              String   @id @default(cuid())
+  patId           String
+  requestMethod   String
+  requestPath     String
+  idempotencyHash String
+  requestHash     String
+  responseStatus  Int
+  responseBody    Json
+  createdAt       DateTime @default(now())
+  expiresAt       DateTime
+
+  pat PersonalAccessToken @relation(fields: [patId], references: [id], onDelete: Cascade)
+
+  @@unique([patId, idempotencyHash])
+  @@index([expiresAt])
+}

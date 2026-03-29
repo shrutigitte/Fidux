@@ -1,0 +1,1146 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fidux Plugin</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #f7f8fc;
+      --bg-strong: #ffffff;
+      --surface: rgba(255, 255, 255, 0.94);
+      --surface-soft: rgba(245, 247, 255, 0.9);
+      --text: #111827;
+      --muted: #5b6477;
+      --line: rgba(129, 140, 248, 0.22);
+      --line-strong: rgba(217, 70, 239, 0.3);
+      --shadow: 0 24px 60px rgba(67, 42, 137, 0.16);
+      --teal: #14b8a6;
+      --teal-strong: #0f8f83;
+      --purple: #7c3aed;
+      --magenta: #db2777;
+      --danger: #dc2626;
+      --success: #0f9b65;
+      --warn: #ca8a04;
+      --buttonText: #ffffff;
+      --fieldBg: rgba(255, 255, 255, 0.78);
+      --heroGlowA: rgba(20, 184, 166, 0.18);
+      --heroGlowB: rgba(124, 58, 237, 0.14);
+      --heroGlowC: rgba(219, 39, 119, 0.16);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #040814;
+        --bg-strong: #091122;
+        --surface: rgba(9, 17, 34, 0.92);
+        --surface-soft: rgba(14, 25, 46, 0.9);
+        --text: #f8fafc;
+        --muted: #a7b0c5;
+        --line: rgba(148, 163, 184, 0.16);
+        --line-strong: rgba(192, 132, 252, 0.26);
+        --shadow: 0 30px 70px rgba(1, 7, 20, 0.46);
+        --teal: #22d3c5;
+        --teal-strong: #14b8a6;
+        --purple: #8b5cf6;
+        --magenta: #f04ca2;
+        --danger: #fb7185;
+        --success: #34d399;
+        --warn: #fbbf24;
+        --buttonText: #ffffff;
+        --fieldBg: rgba(5, 13, 28, 0.72);
+        --heroGlowA: rgba(34, 211, 197, 0.15);
+        --heroGlowB: rgba(139, 92, 246, 0.18);
+        --heroGlowC: rgba(240, 76, 162, 0.14);
+      }
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+    }
+
+    body {
+      position: relative;
+      padding: 16px;
+      overflow-x: hidden;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at 8% 4%, var(--heroGlowA), transparent 32%),
+        radial-gradient(circle at 88% 10%, var(--heroGlowC), transparent 28%),
+        radial-gradient(circle at 78% 26%, var(--heroGlowB), transparent 36%),
+        linear-gradient(180deg, color-mix(in srgb, var(--bg) 92%, var(--bg-strong) 8%) 0%, var(--bg) 100%);
+      color: var(--text);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    body::before,
+    body::after {
+      content: "";
+      position: fixed;
+      pointer-events: none;
+      inset: auto;
+      border-radius: 999px;
+      filter: blur(68px);
+      opacity: 0.6;
+      z-index: 0;
+    }
+
+    body::before {
+      top: -80px;
+      left: -70px;
+      width: 180px;
+      height: 180px;
+      background: var(--heroGlowA);
+    }
+
+    body::after {
+      right: -64px;
+      bottom: 120px;
+      width: 190px;
+      height: 190px;
+      background: var(--heroGlowC);
+    }
+
+    .appShell {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      gap: 14px;
+    }
+
+    .heroCard,
+    .panel {
+      position: relative;
+      overflow: hidden;
+      border-radius: 24px;
+      border: 1px solid var(--line);
+      background:
+        linear-gradient(180deg, color-mix(in srgb, var(--surface) 90%, transparent 10%) 0%, color-mix(in srgb, var(--surface-soft) 92%, transparent 8%) 100%);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(16px);
+    }
+
+    .heroCard {
+      padding: 18px 18px 16px;
+      display: grid;
+      gap: 16px;
+    }
+
+    .heroCard::after,
+    .panel::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      padding: 1px;
+      background: linear-gradient(135deg, color-mix(in srgb, var(--teal) 64%, transparent 36%), color-mix(in srgb, var(--purple) 46%, transparent 54%), color-mix(in srgb, var(--magenta) 60%, transparent 40%));
+      -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+      -webkit-mask-composite: xor;
+      mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+      mask-composite: exclude;
+      opacity: 0.38;
+      pointer-events: none;
+    }
+
+    .heroTop {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .brandBlock {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logoMark {
+      display: grid;
+      grid-template-columns: repeat(2, 16px);
+      grid-auto-rows: 16px;
+      gap: 4px;
+    }
+
+    .logoMark span {
+      border-radius: 5px;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.24), 0 10px 18px rgba(124, 58, 237, 0.14);
+    }
+
+    .logoMark span:nth-child(1) {
+      background: linear-gradient(180deg, color-mix(in srgb, var(--teal) 72%, white 28%) 0%, var(--teal) 100%);
+    }
+
+    .logoMark span:nth-child(2) {
+      background: linear-gradient(180deg, color-mix(in srgb, var(--purple) 72%, white 28%) 0%, var(--purple) 100%);
+    }
+
+    .logoMark span:nth-child(3) {
+      background: linear-gradient(180deg, color-mix(in srgb, var(--teal) 56%, var(--purple) 44%) 0%, color-mix(in srgb, var(--teal) 72%, #0b1020 28%) 100%);
+    }
+
+    .logoMark span:nth-child(4) {
+      background: linear-gradient(180deg, color-mix(in srgb, var(--magenta) 70%, white 30%) 0%, var(--magenta) 100%);
+    }
+
+    .brandText {
+      display: grid;
+      gap: 2px;
+    }
+
+    .brandText h1 {
+      margin: 0;
+      font-size: 30px;
+      line-height: 0.98;
+      letter-spacing: -0.05em;
+      font-weight: 900;
+    }
+
+    .brandText p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 11px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      font-weight: 700;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      min-height: 32px;
+      padding: 0 12px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: color-mix(in srgb, var(--fieldBg) 86%, transparent 14%);
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .chip.ok {
+      color: var(--success);
+      border-color: color-mix(in srgb, var(--success) 46%, var(--line) 54%);
+      background: color-mix(in srgb, var(--success) 12%, var(--fieldBg) 88%);
+    }
+
+    .heroCopy {
+      display: grid;
+      gap: 10px;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin: 0;
+      color: var(--teal);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .eyebrow::before {
+      content: "";
+      width: 22px;
+      height: 1px;
+      background: linear-gradient(90deg, var(--teal), transparent);
+    }
+
+    .heroCopy h2 {
+      margin: 0;
+      max-width: 320px;
+      font-size: 24px;
+      line-height: 1.05;
+      letter-spacing: -0.05em;
+      font-weight: 900;
+    }
+
+    .heroCopy h2 span {
+      background: linear-gradient(90deg, var(--teal) 0%, var(--purple) 52%, var(--magenta) 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .heroCopy p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+      max-width: 360px;
+    }
+
+    .heroStats {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .heroStat {
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      background: color-mix(in srgb, var(--fieldBg) 82%, transparent 18%);
+      padding: 12px;
+      display: grid;
+      gap: 4px;
+    }
+
+    .heroStat strong {
+      font-size: 11px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .heroStat span {
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--text);
+    }
+
+    .panel {
+      padding: 16px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .panelHeader {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .panelHeader h3 {
+      margin: 0;
+      font-size: 17px;
+      line-height: 1.08;
+      letter-spacing: -0.03em;
+      font-weight: 800;
+    }
+
+    .panelHeader p {
+      margin: 3px 0 0;
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .panelTag {
+      display: inline-flex;
+      align-items: center;
+      min-height: 28px;
+      padding: 0 10px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: color-mix(in srgb, var(--fieldBg) 82%, transparent 18%);
+      color: var(--purple);
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .row {
+      display: grid;
+      gap: 7px;
+    }
+
+    .formGrid {
+      display: grid;
+      gap: 12px;
+    }
+
+    .compactGrid {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: minmax(0, 1fr) 118px;
+    }
+
+    label {
+      color: var(--muted);
+      font-size: 11px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      font-weight: 800;
+    }
+
+    input,
+    select,
+    textarea,
+    button {
+      width: 100%;
+      border-radius: 16px;
+      font-size: 13px;
+      font-family: inherit;
+    }
+
+    input,
+    select,
+    textarea {
+      border: 1px solid var(--line);
+      padding: 12px 14px;
+      background: var(--fieldBg);
+      color: var(--text);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      transition: border-color 140ms ease, box-shadow 140ms ease, transform 140ms ease;
+    }
+
+    input::placeholder,
+    textarea::placeholder {
+      color: color-mix(in srgb, var(--muted) 88%, transparent 12%);
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      outline: none;
+      border-color: color-mix(in srgb, var(--purple) 48%, var(--line) 52%);
+      box-shadow:
+        0 0 0 3px color-mix(in srgb, var(--purple) 16%, transparent 84%),
+        0 16px 32px rgba(111, 53, 184, 0.12);
+    }
+
+    textarea {
+      min-height: 92px;
+      resize: vertical;
+      line-height: 1.48;
+    }
+
+    .selectionCard,
+    .status,
+    .resultMeta,
+    .scopeWrap {
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      background: color-mix(in srgb, var(--fieldBg) 82%, transparent 18%);
+      padding: 12px 14px;
+    }
+
+    .selectionCard {
+      display: grid;
+      gap: 6px;
+    }
+
+    .selectionCard strong {
+      font-size: 14px;
+      letter-spacing: -0.02em;
+    }
+
+    .selectionCard span {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .hint {
+      margin: 0;
+      font-size: 11px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .actions,
+    .resultActions {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    button {
+      position: relative;
+      overflow: hidden;
+      border: 0;
+      min-height: 46px;
+      padding: 0 16px;
+      cursor: pointer;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+      color: var(--buttonText);
+      background: linear-gradient(90deg, var(--teal) 0%, var(--purple) 54%, var(--magenta) 100%);
+      box-shadow: 0 16px 30px rgba(124, 58, 237, 0.22);
+      transition: transform 140ms ease, box-shadow 140ms ease, opacity 140ms ease;
+    }
+
+    button::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, color-mix(in srgb, white 16%, transparent 84%) 0%, transparent 42%, color-mix(in srgb, white 10%, transparent 90%) 100%);
+      opacity: 0;
+      transition: opacity 140ms ease;
+    }
+
+    button:hover:enabled {
+      transform: translateY(-1px);
+      box-shadow: 0 18px 34px rgba(124, 58, 237, 0.28);
+    }
+
+    button:hover:enabled::after {
+      opacity: 1;
+    }
+
+    button.secondary {
+      color: var(--text);
+      background: color-mix(in srgb, var(--fieldBg) 86%, transparent 14%);
+      border: 1px solid var(--line);
+      box-shadow: none;
+    }
+
+    button.secondary:hover:enabled {
+      box-shadow: 0 12px 24px rgba(20, 24, 39, 0.08);
+      border-color: color-mix(in srgb, var(--purple) 34%, var(--line) 66%);
+    }
+
+    button:disabled {
+      opacity: 0.52;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .status {
+      display: none;
+      word-break: break-word;
+      line-height: 1.5;
+      color: var(--muted);
+    }
+
+    .status:not(:empty) {
+      display: block;
+    }
+
+    .status.ok {
+      color: var(--success);
+      border-color: color-mix(in srgb, var(--success) 40%, var(--line) 60%);
+      background: color-mix(in srgb, var(--success) 10%, var(--fieldBg) 90%);
+    }
+
+    .status.error {
+      color: var(--danger);
+      border-color: color-mix(in srgb, var(--danger) 38%, var(--line) 62%);
+      background: color-mix(in srgb, var(--danger) 10%, var(--fieldBg) 90%);
+    }
+
+    .status.working {
+      color: var(--warn);
+      border-color: color-mix(in srgb, var(--warn) 34%, var(--line) 66%);
+      background: color-mix(in srgb, var(--warn) 10%, var(--fieldBg) 90%);
+    }
+
+    .resultMeta {
+      display: grid;
+      gap: 8px;
+    }
+
+    .mono {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 11px;
+      color: var(--muted);
+      word-break: break-word;
+      line-height: 1.5;
+    }
+
+    .resultActions .full {
+      grid-column: 1 / -1;
+    }
+
+    .scopeWrap {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: flex-start;
+      min-height: 52px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 28px;
+      padding: 0 10px;
+      border-radius: 999px;
+      border: 1px solid color-mix(in srgb, var(--purple) 24%, var(--line) 76%);
+      background: color-mix(in srgb, var(--fieldBg) 86%, transparent 14%);
+      color: var(--purple);
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    @media (max-width: 420px) {
+      body {
+        padding: 12px;
+      }
+
+      .heroStats,
+      .compactGrid,
+      .actions,
+      .resultActions {
+        grid-template-columns: 1fr;
+      }
+
+      .resultActions .full {
+        grid-column: auto;
+      }
+
+      .heroTop,
+      .panelHeader {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="appShell">
+    <section class="heroCard">
+      <div class="heroTop">
+        <div class="brandBlock">
+          <div class="logoMark" aria-hidden="true">
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+          <div class="brandText">
+            <h1>Fidux</h1>
+            <p>Design handoff plugin</p>
+          </div>
+        </div>
+        <div id="connectBadge" class="chip">Disconnected</div>
+      </div>
+
+      <div class="heroCopy">
+        <p class="eyebrow">Figma to execution</p>
+        <h2>Turn selected nodes into <span>implementation-ready issues</span>.</h2>
+        <p>Create tracked work with the linked design context, project destination, preview image, and deep link already attached.</p>
+      </div>
+
+      <div class="heroStats">
+        <div class="heroStat">
+          <strong>Context</strong>
+          <span>Node + Preview</span>
+        </div>
+        <div class="heroStat">
+          <strong>Routing</strong>
+          <span>Project scoped</span>
+        </div>
+        <div class="heroStat">
+          <strong>Output</strong>
+          <span>Issue + Deep Link</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panelHeader">
+        <div>
+          <h3>Workspace Connection</h3>
+          <p>Connect the plugin to your Fidux organization with a personal access token.</p>
+        </div>
+        <div class="panelTag">PAT Auth</div>
+      </div>
+
+      <div class="formGrid">
+        <div class="row">
+          <label for="apiBase">API Base</label>
+          <input id="apiBase" placeholder="https://api.example.com/api/plugin or http://localhost:3002/api/plugin" />
+        </div>
+        <div class="row">
+          <label for="pat">PAT Token</label>
+          <input id="pat" type="password" placeholder="fidux_pat_..." />
+        </div>
+      </div>
+
+      <div class="actions">
+        <button id="connectBtn">Connect</button>
+        <button id="closeBtn" class="secondary">Close</button>
+      </div>
+
+      <div id="connectStatus" class="status">Not connected.</div>
+    </section>
+
+    <section class="panel">
+      <div class="panelHeader">
+        <div>
+          <h3>Create Issue from Selection</h3>
+          <p>Use the current selection as the visual source for a tracked implementation issue.</p>
+        </div>
+        <div class="panelTag">Selection</div>
+      </div>
+
+      <div class="row">
+        <label>Selected Node</label>
+        <div id="selectionInfo" class="selectionCard">
+          <strong>No node selected.</strong>
+          <span>Select a frame or layer to continue.</span>
+        </div>
+      </div>
+
+      <div class="row">
+        <label for="fileKey">File Key Override</label>
+        <input id="fileKey" placeholder="Auto from file, or paste file key / full Figma URL" />
+        <p class="hint">Use this only when file key detection is unavailable in draft or library files.</p>
+      </div>
+
+      <div class="compactGrid">
+        <div class="row">
+          <label for="projectSelect">Project</label>
+          <select id="projectSelect" disabled>
+            <option value="">Connect first</option>
+          </select>
+        </div>
+        <div class="row">
+          <label for="priority">Priority</label>
+          <select id="priority">
+            <option value="LOW">LOW</option>
+            <option value="MEDIUM" selected>MEDIUM</option>
+            <option value="HIGH">HIGH</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="row">
+        <label for="title">Issue Title</label>
+        <input id="title" placeholder="Implement selected component" />
+      </div>
+
+      <div class="row">
+        <label for="description">Description</label>
+        <textarea id="description" placeholder="Describe scope, acceptance criteria, and any implementation constraints."></textarea>
+      </div>
+
+      <button id="createIssueBtn" disabled>Create Issue from Selection</button>
+      <div id="createStatus" class="status"></div>
+    </section>
+
+    <section id="resultCard" class="panel hidden">
+      <div class="panelHeader">
+        <div>
+          <h3>Last Created Issue</h3>
+          <p>Open the linked Figma reference or copy the issue identifier.</p>
+        </div>
+        <div class="panelTag">Output</div>
+      </div>
+
+      <div class="resultMeta">
+        <div id="resultIssueId" class="mono"></div>
+        <div id="resultDeepLink" class="mono"></div>
+        <div id="resultThumb" class="mono"></div>
+      </div>
+
+      <div class="resultActions">
+        <button id="openFigmaBtn">Open in Figma</button>
+        <button id="openThumbBtn" class="secondary">Open Thumbnail</button>
+        <button id="copyIssueBtn" class="secondary full">Copy Issue ID</button>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panelHeader">
+        <div>
+          <h3>Connected Scopes</h3>
+          <p>Scopes available for the currently connected token.</p>
+        </div>
+        <div class="panelTag">Access</div>
+      </div>
+      <div id="scopePills" class="scopeWrap">
+        <span class="hint">none</span>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const state = {
+      connected: false,
+      connecting: false,
+      creating: false,
+      titleTouched: false,
+      config: {
+        apiBase: '',
+        hasPat: false,
+        lastOrgId: '',
+        lastProjectId: '',
+      },
+      projects: [],
+      selection: null,
+      fileKey: '',
+      result: null,
+      scopes: [],
+    };
+
+    const el = {
+      connectBadge: document.getElementById('connectBadge'),
+      apiBase: document.getElementById('apiBase'),
+      pat: document.getElementById('pat'),
+      connectBtn: document.getElementById('connectBtn'),
+      closeBtn: document.getElementById('closeBtn'),
+      connectStatus: document.getElementById('connectStatus'),
+      selectionInfo: document.getElementById('selectionInfo'),
+      fileKey: document.getElementById('fileKey'),
+      projectSelect: document.getElementById('projectSelect'),
+      title: document.getElementById('title'),
+      description: document.getElementById('description'),
+      priority: document.getElementById('priority'),
+      createIssueBtn: document.getElementById('createIssueBtn'),
+      createStatus: document.getElementById('createStatus'),
+      scopePills: document.getElementById('scopePills'),
+      resultCard: document.getElementById('resultCard'),
+      resultIssueId: document.getElementById('resultIssueId'),
+      resultDeepLink: document.getElementById('resultDeepLink'),
+      resultThumb: document.getElementById('resultThumb'),
+      openFigmaBtn: document.getElementById('openFigmaBtn'),
+      openThumbBtn: document.getElementById('openThumbBtn'),
+      copyIssueBtn: document.getElementById('copyIssueBtn'),
+    };
+
+    el.connectBtn.onclick = () => {
+      if (state.connecting) return;
+      state.connecting = true;
+      setConnectStatus('Connecting to Fidux and loading accessible projects...', 'working');
+      refreshUIState();
+
+      parent.postMessage({
+        pluginMessage: {
+          type: 'connect',
+          payload: {
+            apiBase: el.apiBase.value.trim(),
+            pat: el.pat.value.trim(),
+          },
+        },
+      }, '*');
+    };
+
+    el.closeBtn.onclick = () => {
+      parent.postMessage({ pluginMessage: { type: 'close' } }, '*');
+    };
+
+    el.createIssueBtn.onclick = () => {
+      if (state.creating || !canCreate()) return;
+      state.creating = true;
+      setCreateStatus('Creating issue and uploading the preview image...', 'working');
+      refreshUIState();
+
+      parent.postMessage({
+        pluginMessage: {
+          type: 'createIssue',
+          payload: {
+            projectId: el.projectSelect.value,
+            title: el.title.value.trim(),
+            description: el.description.value.trim(),
+            priority: el.priority.value,
+            fileKey: el.fileKey.value.trim(),
+          },
+        },
+      }, '*');
+    };
+
+    el.title.oninput = () => {
+      state.titleTouched = true;
+      refreshUIState();
+    };
+
+    el.projectSelect.onchange = () => {
+      refreshUIState();
+    };
+
+    el.fileKey.oninput = () => {
+      refreshUIState();
+    };
+
+    el.openFigmaBtn.onclick = () => {
+      if (!state.result || !state.result.figmaDeepLink) return;
+      openExternal(state.result.figmaDeepLink);
+    };
+
+    el.openThumbBtn.onclick = () => {
+      if (!state.result || !state.result.thumbnailUrl) return;
+      openExternal(state.result.thumbnailUrl);
+    };
+
+    el.copyIssueBtn.onclick = async () => {
+      if (!state.result || !state.result.issueId) return;
+      const text = state.result.issueId;
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          await navigator.clipboard.writeText(text);
+          setCreateStatus('Issue ID copied to clipboard.', 'ok');
+          return;
+        }
+      } catch (_error) {
+        // Ignore clipboard failure and fall back to manual copy prompt.
+      }
+      setCreateStatus('Copy manually: ' + text, 'working');
+    };
+
+    window.onmessage = (event) => {
+      const message = event.data && event.data.pluginMessage;
+      if (!message || !message.type) return;
+
+      if (message.type === 'init') {
+        handleInit(message.payload || {});
+        return;
+      }
+
+      if (message.type === 'selection') {
+        state.selection = message.payload && message.payload.selection;
+        if (message.payload && message.payload.fileKey && !el.fileKey.value.trim()) {
+          state.fileKey = message.payload.fileKey;
+          el.fileKey.value = state.fileKey;
+        }
+        maybeAutofillTitle();
+        renderSelection();
+        refreshUIState();
+        return;
+      }
+
+      if (message.type === 'connected') {
+        handleConnected(message.payload || {});
+        return;
+      }
+
+      if (message.type === 'issueCreated') {
+        handleIssueCreated(message.payload || {});
+        return;
+      }
+
+      if (message.type === 'error') {
+        handleError(message.payload || {});
+      }
+    };
+
+    function handleInit(payload) {
+      if (payload.config) {
+        state.config = payload.config;
+      }
+
+      if (payload.selection) {
+        state.selection = payload.selection;
+      }
+
+      if (payload.fileKey) {
+        state.fileKey = payload.fileKey;
+        if (!el.fileKey.value.trim()) {
+          el.fileKey.value = state.fileKey;
+        }
+      }
+
+      el.apiBase.value = state.config.apiBase || '';
+      if (state.config.hasPat) {
+        setConnectStatus('Saved PAT detected. Click Connect to refresh organization access.', 'working');
+      } else {
+        setConnectStatus('Not connected.', 'muted');
+      }
+
+      maybeAutofillTitle();
+      renderSelection();
+      refreshUIState();
+    }
+
+    function handleConnected(payload) {
+      state.connected = true;
+      state.connecting = false;
+      state.projects = Array.isArray(payload.projects) ? payload.projects : [];
+      state.scopes = payload.verify && Array.isArray(payload.verify.scopes) ? payload.verify.scopes : [];
+      if (payload.config) {
+        state.config = payload.config;
+      }
+
+      renderProjects();
+      renderScopes();
+
+      const orgId = payload.verify && payload.verify.orgId ? payload.verify.orgId : 'n/a';
+      setConnectStatus('Connected. Org: ' + orgId + '. Projects available: ' + state.projects.length, 'ok');
+      setCreateStatus('', 'muted');
+      refreshUIState();
+    }
+
+    function handleIssueCreated(payload) {
+      state.creating = false;
+      const issue = payload.issue || {};
+      state.result = {
+        issueId: issue.id || '',
+        figmaDeepLink: payload.figmaDeepLink || '',
+        thumbnailUrl: payload.thumbnailUrl || '',
+      };
+      renderResult();
+      setCreateStatus('Issue created successfully.', 'ok');
+      refreshUIState();
+    }
+
+    function handleError(payload) {
+      state.connecting = false;
+      state.creating = false;
+      const msg = payload && payload.message ? payload.message : 'Unknown error';
+
+      if (!state.connected) {
+        setConnectStatus(msg, 'error');
+      }
+      setCreateStatus(msg, 'error');
+      refreshUIState();
+    }
+
+    function renderSelection() {
+      const s = state.selection;
+      if (!s || !s.count) {
+        el.selectionInfo.innerHTML = '<strong>No node selected.</strong><span>Select a frame or layer to continue.</span>';
+        return;
+      }
+
+      const using = s.nodeName || 'Unnamed';
+      const nodeId = s.nodeId || 'n/a';
+      const multi = s.count > 1 ? 'Using the first selected node.' : 'Ready to create from the current node.';
+      el.selectionInfo.innerHTML =
+        '<strong>' + escapeHtml(using) + '</strong>' +
+        '<span>' +
+        escapeHtml('Node ID: ' + nodeId + ' • Selected: ' + s.count + '. ' + multi) +
+        '</span>';
+    }
+
+    function renderProjects() {
+      el.projectSelect.innerHTML = '';
+
+      if (!state.projects.length) {
+        const opt = document.createElement('option');
+        opt.value = '';
+        opt.textContent = 'No accessible projects';
+        el.projectSelect.appendChild(opt);
+        el.projectSelect.disabled = true;
+        return;
+      }
+
+      for (const project of state.projects) {
+        const opt = document.createElement('option');
+        opt.value = project.id;
+        opt.textContent = project.name + ' (' + project.role + ')';
+        if (project.id === state.config.lastProjectId) {
+          opt.selected = true;
+        }
+        el.projectSelect.appendChild(opt);
+      }
+
+      el.projectSelect.disabled = false;
+    }
+
+    function renderScopes() {
+      el.scopePills.innerHTML = '';
+      if (!state.scopes.length) {
+        const empty = document.createElement('span');
+        empty.className = 'hint';
+        empty.textContent = 'none';
+        el.scopePills.appendChild(empty);
+        return;
+      }
+
+      for (const scope of state.scopes) {
+        const span = document.createElement('span');
+        span.className = 'pill';
+        span.textContent = scope;
+        el.scopePills.appendChild(span);
+      }
+    }
+
+    function renderResult() {
+      if (!state.result || !state.result.issueId) {
+        el.resultCard.classList.add('hidden');
+        return;
+      }
+
+      el.resultCard.classList.remove('hidden');
+      el.resultIssueId.textContent = 'Issue ID: ' + state.result.issueId;
+      el.resultDeepLink.textContent = state.result.figmaDeepLink ? 'Figma: ' + state.result.figmaDeepLink : '';
+      el.resultThumb.textContent = state.result.thumbnailUrl ? 'Thumbnail: ' + state.result.thumbnailUrl : '';
+      el.openFigmaBtn.disabled = !state.result.figmaDeepLink;
+      el.openThumbBtn.disabled = !state.result.thumbnailUrl;
+      el.copyIssueBtn.disabled = !state.result.issueId;
+    }
+
+    function maybeAutofillTitle() {
+      if (state.titleTouched) return;
+      if (el.title.value.trim()) return;
+      const s = state.selection;
+      if (!s || !s.nodeName) return;
+      el.title.value = 'Implement ' + s.nodeName;
+    }
+
+    function canCreate() {
+      const selected = state.selection && Number(state.selection.count) > 0;
+      const hasProject = !el.projectSelect.disabled && Boolean(el.projectSelect.value);
+      const hasTitle = el.title.value.trim().length >= 3;
+      return state.connected && selected && hasProject && hasTitle && !state.creating;
+    }
+
+    function refreshUIState() {
+      if (state.connecting) {
+        el.connectBtn.textContent = 'Connecting...';
+        el.connectBtn.disabled = true;
+      } else {
+        el.connectBtn.textContent = state.connected ? 'Reconnect' : 'Connect';
+        el.connectBtn.disabled = false;
+      }
+
+      if (state.creating) {
+        el.createIssueBtn.textContent = 'Creating...';
+        el.createIssueBtn.disabled = true;
+      } else {
+        el.createIssueBtn.textContent = 'Create Issue from Selection';
+        el.createIssueBtn.disabled = !canCreate();
+      }
+
+      el.connectBadge.textContent = state.connected ? 'Connected' : 'Disconnected';
+      el.connectBadge.className = state.connected ? 'chip ok' : 'chip';
+    }
+
+    function setConnectStatus(message, kind) {
+      setStatus(el.connectStatus, message, kind);
+    }
+
+    function setCreateStatus(message, kind) {
+      setStatus(el.createStatus, message, kind);
+    }
+
+    function setStatus(target, message, kind) {
+      target.textContent = message || '';
+      target.className = 'status';
+      if (kind === 'ok') target.classList.add('ok');
+      if (kind === 'error') target.classList.add('error');
+      if (kind === 'working') target.classList.add('working');
+    }
+
+    function openExternal(url) {
+      parent.postMessage({
+        pluginMessage: {
+          type: 'openExternal',
+          payload: {
+            url: String(url || ''),
+          },
+        },
+      }, '*');
+    }
+
+    function escapeHtml(value) {
+      return String(value || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+  </script>
+</body>
+</html>

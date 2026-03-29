@@ -1,0 +1,17 @@
+{
+  "name": "Fidux",
+  "id": "fidux-production-plugin",
+  "api": "1.0.0",
+  "editorType": [
+    "figma"
+  ],
+  "main": "code.js",
+  "ui": "ui.html",
+  "networkAccess": {
+    "allowedDomains": [
+      "https://fidux.example.com",
+      "https://*.r2.cloudflarestorage.com",
+      "https://*.r2.dev"
+    ]
+  }
+}
