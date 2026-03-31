@@ -27,6 +27,7 @@ import {
   sendIssueMessage,
   updateOrgMemberRole,
   updateProjectMemberRole,
+  verifyEmailToken,
 } from './api';
 import {
   BoardIssue,
@@ -187,6 +188,17 @@ function readIssueDeepLinkFromUrl() {
   };
 }
 
+function readVerificationTokenFromUrl() {
+  const params = new URLSearchParams(window.location.search);
+  return params.get('verifyEmailToken')?.trim() || '';
+}
+
+function clearVerificationTokenFromUrl() {
+  const url = new URL(window.location.href);
+  url.searchParams.delete('verifyEmailToken');
+  window.history.replaceState({}, '', url.toString());
+}
+
 export default function App() {
   const [authMode, setAuthMode] = useState<AuthMode>('login');
   const [themeMode, setThemeMode] = useState<ThemeMode>('system');
@@ -262,6 +274,7 @@ export default function App() {
   const [deepLinkIssueId, setDeepLinkIssueId] = useState('');
   const [deepLinkProjectId, setDeepLinkProjectId] = useState('');
   const [deepLinkView, setDeepLinkView] = useState<IssuePanelMode>('full');
+  const [pendingVerifyEmailToken, setPendingVerifyEmailToken] = useState('');
   const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
 
   const [toast, setToast] = useState<Toast | null>(null);
@@ -284,6 +297,11 @@ export default function App() {
       setDeepLinkIssueId(deepLink.issueId);
       setDeepLinkProjectId(deepLink.projectId);
       setDeepLinkView(deepLink.view);
+    }
+
+    const verifyEmailTokenFromUrl = readVerificationTokenFromUrl();
+    if (verifyEmailTokenFromUrl) {
+      setPendingVerifyEmailToken(verifyEmailTokenFromUrl);
     }
 
     if (savedToken) {
@@ -338,6 +356,42 @@ export default function App() {
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [logoutConfirmOpen]);
+
+  useEffect(() => {
+    if (!pendingVerifyEmailToken) {
+      return;
+    }
+
+    let cancelled = false;
+
+    void (async () => {
+      try {
+        const response = await verifyEmailToken(normalizeApiBase(apiBase), pendingVerifyEmailToken);
+        if (cancelled) {
+          return;
+        }
+
+        setUser((currentUser) => (currentUser && currentUser.id === response.user.id ? response.user : currentUser));
+        setAuthMode('login');
+        setToast({ type: 'success', message: 'Email verified successfully. You can continue in Fidux now.' });
+      } catch (error) {
+        if (cancelled) {
+          return;
+        }
+
+        setToast({ type: 'error', message: `Email verification failed: ${humanizeApiError(error)}` });
+      } finally {
+        if (!cancelled) {
+          clearVerificationTokenFromUrl();
+          setPendingVerifyEmailToken('');
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [pendingVerifyEmailToken, apiBase]);
 
   useEffect(() => {
     setMobileNavOpen(false);

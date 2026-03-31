@@ -149,6 +149,17 @@ export async function resendVerificationEmail(baseUrl: string, token: string) {
   });
 }
 
+export async function verifyEmailToken(baseUrl: string, verifyToken: string) {
+  return request<{
+    verified: boolean;
+    user: AuthResponse['user'];
+  }>({
+    baseUrl,
+    path: `/auth/verify-email?token=${encodeURIComponent(verifyToken)}`,
+    method: 'GET',
+  });
+}
+
 export async function listProjects(baseUrl: string, token: string) {
   return request<{ projects: ProjectSummary[] }>({
     baseUrl,

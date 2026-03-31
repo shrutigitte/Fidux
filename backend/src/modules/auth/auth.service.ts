@@ -17,7 +17,6 @@ import {
 } from '../../common/email/fidux-email-builders';
 import {
     resolveFiduxMailerConfig,
-    resolveFiduxVerifyLinkBaseUrl,
     resolveFiduxWebAppBaseUrl,
 } from '../../common/email/fidux-mail-config';
 import { renderFiduxEmailHtml, renderFiduxEmailText } from '../../common/email/fidux-email-template';
@@ -47,7 +46,6 @@ export class AuthService {
     private readonly googleOAuthClient: OAuth2Client;
     private readonly requireEmailVerified: boolean;
     private readonly verifyTokenExpiresHours: number;
-    private readonly verifyLinkBaseUrl: string;
     private readonly webAppBaseUrl: string;
 
     constructor(
@@ -67,7 +65,6 @@ export class AuthService {
         this.verifyTokenExpiresHours = this.resolveVerifyTokenExpiryHours(
             this.configService.get<string>('AUTH_VERIFY_TOKEN_EXPIRES_HOURS'),
         );
-        this.verifyLinkBaseUrl = resolveFiduxVerifyLinkBaseUrl(this.configService);
         this.webAppBaseUrl = resolveFiduxWebAppBaseUrl(this.configService);
     }
 
@@ -491,7 +488,7 @@ export class AuthService {
             },
         );
 
-        const verifyUrl = `${this.verifyLinkBaseUrl}?token=${encodeURIComponent(token)}`;
+        const verifyUrl = this.buildFrontendVerificationUrl(token);
         const email = buildVerificationEmail({
             accountEmail: user.email,
             expiresHours: this.verifyTokenExpiresHours,
@@ -539,6 +536,12 @@ export class AuthService {
             delivery: delivery.delivery,
             error: delivery.error ?? 'Failed to send verification email',
         };
+    }
+
+    private buildFrontendVerificationUrl(token: string) {
+        const url = new URL(this.webAppBaseUrl);
+        url.searchParams.set('verifyEmailToken', token);
+        return url.toString();
     }
 
     private queueVerificationEmail(user: UserRow) {

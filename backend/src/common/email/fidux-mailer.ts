@@ -39,6 +39,7 @@ export async function sendFiduxEmail(
                 host: config.smtpHost,
                 port: config.smtpPort,
                 secure: config.smtpSecure,
+                family: 4,
                 connectionTimeout: 10000,
                 greetingTimeout: 10000,
                 socketTimeout: 15000,
