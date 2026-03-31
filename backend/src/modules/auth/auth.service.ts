@@ -121,11 +121,7 @@ export class AuthService {
             const auth = await this.buildAuthResponse(user);
             const verification = this.requireEmailVerified
                 ? await this.ensureVerificationEmailSent(user)
-                : {
-                    required: false,
-                    sent: false,
-                    delivery: 'not_required',
-                };
+                : this.queueVerificationEmail(user);
 
             if (this.requireEmailVerified && verification.required && !verification.sent) {
                 throw this.badRequest(
@@ -479,6 +475,7 @@ export class AuthService {
                 required: false,
                 sent: false,
                 delivery: 'already_verified',
+                error: undefined,
             };
         }
 
@@ -541,6 +538,43 @@ export class AuthService {
             sent: false,
             delivery: delivery.delivery,
             error: delivery.error ?? 'Failed to send verification email',
+        };
+    }
+
+    private queueVerificationEmail(user: UserRow) {
+        if (user.emailVerifiedAt) {
+            return {
+                required: false,
+                sent: false,
+                delivery: 'already_verified',
+            };
+        }
+
+        void this.ensureVerificationEmailSent(user)
+            .then((delivery) => {
+                if (!delivery.sent) {
+                    // eslint-disable-next-line no-console
+                    console.error(
+                        `[AUTH][EMAIL] Verification email failed for ${user.email}: ${
+                            delivery.error || delivery.delivery
+                        }`,
+                    );
+                }
+            })
+            .catch((error) => {
+                // eslint-disable-next-line no-console
+                console.error(
+                    `[AUTH][EMAIL] Verification email threw for ${user.email}: ${
+                        error instanceof Error ? error.message : 'Unknown error'
+                    }`,
+                );
+            });
+
+        return {
+            required: false,
+            sent: false,
+            delivery: 'queued',
+            error: undefined,
         };
     }
 

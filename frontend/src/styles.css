@@ -300,6 +300,10 @@ button:focus-visible {
   justify-content: flex-end;
 }
 
+.desktopTabs {
+  display: contents;
+}
+
 .compactInput {
   min-width: 120px;
 }
@@ -366,6 +370,85 @@ button:focus-visible {
   font-weight: 800;
   color: #fff;
   background: linear-gradient(90deg, var(--magenta) 0%, var(--purple) 100%);
+}
+
+.mobileNavRow,
+.mobileMenuWrap {
+  display: none;
+}
+
+.mobileMenuToggle {
+  border: 1px solid color-mix(in srgb, var(--purple) 24%, var(--line) 76%);
+  background: color-mix(in srgb, var(--bg-strong) 82%, var(--panel) 18%);
+  color: var(--muted);
+  border-radius: 16px;
+  min-height: 44px;
+  padding: 0 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+}
+
+.mobileMenuToggle.open,
+.mobileMenuToggle:hover:enabled {
+  background: var(--purple);
+  border-color: var(--purple);
+  color: #fff;
+  transform: none;
+}
+
+.mobileMenuLines {
+  display: inline-grid;
+  gap: 4px;
+}
+
+.mobileMenuLines span {
+  width: 16px;
+  height: 2px;
+  border-radius: 999px;
+  background: currentcolor;
+  display: block;
+}
+
+.mobileMenuWrap {
+  position: relative;
+}
+
+.mobileMenuDropdown {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  width: min(260px, calc(100vw - 40px));
+  z-index: 40;
+  padding: 10px;
+  display: grid;
+  gap: 8px;
+}
+
+.mobileMenuItem {
+  width: 100%;
+  min-height: 42px;
+  border: 1px solid var(--line);
+  background: var(--panel-soft);
+  color: var(--text);
+  border-radius: 14px;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  font-weight: 700;
+}
+
+.mobileMenuItem.active {
+  background: linear-gradient(90deg, var(--purple) 0%, var(--magenta) 100%);
+  border-color: transparent;
+  color: #fff;
+}
+
+.mobileMenuItem:hover:enabled {
+  background: color-mix(in srgb, var(--purple) 16%, var(--panel-soft) 84%);
+  transform: none;
 }
 
 .themeIcons {
@@ -2022,27 +2105,33 @@ button:focus-visible {
 
   .topActions {
     width: 100%;
-    justify-content: flex-start;
-    flex-direction: column;
-    align-items: stretch;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: nowrap;
   }
 
-  .mainTabs {
-    width: 100%;
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 8px;
+  .desktopTabs {
+    display: none;
   }
 
-  .mainTab,
-  .notificationTab {
-    width: 100%;
+  .mobileNavRow,
+  .mobileMenuWrap {
+    display: flex;
+    align-items: center;
+  }
+
+  .mobileNavRow {
+    gap: 10px;
     min-width: 0;
-    padding-inline: 12px;
+    flex: 1 1 auto;
+  }
+
+  .mobileNotificationButton {
+    flex: 0 0 auto;
   }
 
   .themeIcons {
-    align-self: flex-end;
+    align-self: auto;
   }
 
   .headerLogo .fiduxLogoWordmark {
@@ -2145,13 +2234,20 @@ button:focus-visible {
     font-size: 28px;
   }
 
-  .mainTabs {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  .topActions {
+    align-items: stretch;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .mobileNavRow {
+    width: 100%;
+    justify-content: space-between;
   }
 
   .themeIcons {
-    width: 100%;
+    width: auto;
     justify-content: center;
-    align-self: stretch;
+    align-self: flex-end;
   }
 }

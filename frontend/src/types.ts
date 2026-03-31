@@ -20,6 +20,13 @@ export type AuthResponse = {
   tokenType: 'Bearer';
   expiresIn: string;
   user: User;
+  emailVerification?: {
+    required: boolean;
+    sent: boolean;
+    delivery?: string;
+    verifyUrl?: string;
+    error?: string;
+  };
 };
 
 export type ProjectSummary = {

@@ -191,6 +191,7 @@ export default function App() {
   const [authMode, setAuthMode] = useState<AuthMode>('login');
   const [themeMode, setThemeMode] = useState<ThemeMode>('system');
   const [mainTab, setMainTab] = useState<'dashboard' | 'admin' | 'notifications' | 'profile'>('dashboard');
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   const [apiBase, setApiBase] = useState(resolveDefaultApiBase());
   const [token, setToken] = useState('');
@@ -337,6 +338,10 @@ export default function App() {
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [logoutConfirmOpen]);
+
+  useEffect(() => {
+    setMobileNavOpen(false);
+  }, [mainTab, token]);
 
   useEffect(() => {
     if (!token || loadingSession || !deepLinkIssueId) {
@@ -628,9 +633,14 @@ export default function App() {
       setSignupPassword('');
 
       await bootstrapSession(auth.accessToken, normalizedApiBase);
+      const verificationStatus = auth.emailVerification;
+      const signupMessage =
+        verificationStatus?.sent || verificationStatus?.delivery === 'queued'
+          ? `Account created for ${auth.user.email}. Verification email is on the way.`
+          : `Account created for ${auth.user.email}.`;
       setToast({
         type: 'success',
-        message: `Account created for ${auth.user.email}. Check your email for verification link.`,
+        message: signupMessage,
       });
     } catch (error) {
       setToast({ type: 'error', message: `Signup failed: ${humanizeApiError(error)}` });
@@ -757,6 +767,27 @@ export default function App() {
     setLogoutConfirmOpen(false);
     performLogout();
   }
+
+  function selectMainTab(nextTab: 'dashboard' | 'admin' | 'notifications' | 'profile') {
+    setMainTab(nextTab);
+    setMobileNavOpen(false);
+  }
+
+  const renderNotificationButton = (extraClass?: string) => (
+    <button
+      type="button"
+      role="tab"
+      className={`mainTab notificationTab ${mainTab === 'notifications' ? 'active' : ''} ${extraClass ?? ''}`.trim()}
+      aria-selected={mainTab === 'notifications'}
+      aria-label={`Notifications${notifications.length > 0 ? ` (${notifications.length})` : ''}`}
+      onClick={() => selectMainTab('notifications')}
+    >
+      <svg viewBox="0 0 24 24" aria-hidden="true" className="notifBellIcon">
+        <path d="M12 3a5 5 0 0 0-5 5v2.49c0 .9-.36 1.76-1 2.39l-.7.7A1 1 0 0 0 6 15h12a1 1 0 0 0 .7-1.71l-.7-.7c-.64-.63-1-1.49-1-2.39V8a5 5 0 0 0-5-5zm0 18a3 3 0 0 0 2.82-2h-5.64A3 3 0 0 0 12 21z" />
+      </svg>
+      {notifications.length > 0 ? <span className="notifBadge">{notifications.length}</span> : null}
+    </button>
+  );
 
   async function refreshAdminData() {
     const normalizedApiBase = normalizeApiBase(apiBase);
@@ -1668,51 +1699,92 @@ export default function App() {
             <p className="brandTagline">DesignFlow board for issues, teams, and Figma context.</p>
           </div>
           <div className="topActions">
-            <div className="mainTabs" role="tablist" aria-label="Main tabs">
-              <button
-                type="button"
-                role="tab"
-                className={`mainTab ${mainTab === 'dashboard' ? 'active' : ''}`}
-                aria-selected={mainTab === 'dashboard'}
-                onClick={() => setMainTab('dashboard')}
-              >
-                Dashboard
-              </button>
-              <button
-                type="button"
-                role="tab"
-                className={`mainTab ${mainTab === 'admin' ? 'active' : ''}`}
-                aria-selected={mainTab === 'admin'}
-                onClick={() => setMainTab('admin')}
-              >
-                Admin
-              </button>
-              <button
-                type="button"
-                role="tab"
-                className={`mainTab notificationTab ${mainTab === 'notifications' ? 'active' : ''}`}
-                aria-selected={mainTab === 'notifications'}
-                aria-label={`Notifications${notifications.length > 0 ? ` (${notifications.length})` : ''}`}
-                onClick={() => setMainTab('notifications')}
-              >
-                <svg viewBox="0 0 24 24" aria-hidden="true" className="notifBellIcon">
-                  <path d="M12 3a5 5 0 0 0-5 5v2.49c0 .9-.36 1.76-1 2.39l-.7.7A1 1 0 0 0 6 15h12a1 1 0 0 0 .7-1.71l-.7-.7c-.64-.63-1-1.49-1-2.39V8a5 5 0 0 0-5-5zm0 18a3 3 0 0 0 2.82-2h-5.64A3 3 0 0 0 12 21z" />
-                </svg>
-                {notifications.length > 0 ? <span className="notifBadge">{notifications.length}</span> : null}
-              </button>
-              <button
-                type="button"
-                role="tab"
-                className={`mainTab ${mainTab === 'profile' ? 'active' : ''}`}
-                aria-selected={mainTab === 'profile'}
-                onClick={() => setMainTab('profile')}
-              >
-                Profile
-              </button>
+            <div className="desktopTabs">
+              <div className="mainTabs" role="tablist" aria-label="Main tabs">
+                <button
+                  type="button"
+                  role="tab"
+                  className={`mainTab ${mainTab === 'dashboard' ? 'active' : ''}`}
+                  aria-selected={mainTab === 'dashboard'}
+                  onClick={() => selectMainTab('dashboard')}
+                >
+                  Dashboard
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  className={`mainTab ${mainTab === 'admin' ? 'active' : ''}`}
+                  aria-selected={mainTab === 'admin'}
+                  onClick={() => selectMainTab('admin')}
+                >
+                  Admin
+                </button>
+                {renderNotificationButton()}
+                <button
+                  type="button"
+                  role="tab"
+                  className={`mainTab ${mainTab === 'profile' ? 'active' : ''}`}
+                  aria-selected={mainTab === 'profile'}
+                  onClick={() => selectMainTab('profile')}
+                >
+                  Profile
+                </button>
 
-              <button type="button" className="mainTab" onClick={handleLogout}>
-                Logout
-              </button>
+                <button type="button" className="mainTab" onClick={handleLogout}>
+                  Logout
+                </button>
+              </div>
+            </div>
+            <div className="mobileNavRow">
+              {renderNotificationButton('mobileNotificationButton')}
+              <div className="mobileMenuWrap">
+                <button
+                  type="button"
+                  className={`mobileMenuToggle ${mobileNavOpen ? 'open' : ''}`}
+                  aria-expanded={mobileNavOpen}
+                  aria-haspopup="menu"
+                  aria-label="Open navigation menu"
+                  onClick={() => setMobileNavOpen((current) => !current)}
+                >
+                  <span className="mobileMenuLines" aria-hidden="true">
+                    <span />
+                    <span />
+                    <span />
+                  </span>
+                  <span>Menu</span>
+                </button>
+                {mobileNavOpen ? (
+                  <div className="mobileMenuDropdown panel" role="menu" aria-label="Mobile navigation">
+                    <button
+                      type="button"
+                      role="menuitem"
+                      className={`mobileMenuItem ${mainTab === 'dashboard' ? 'active' : ''}`}
+                      onClick={() => selectMainTab('dashboard')}
+                    >
+                      Dashboard
+                    </button>
+                    <button
+                      type="button"
+                      role="menuitem"
+                      className={`mobileMenuItem ${mainTab === 'admin' ? 'active' : ''}`}
+                      onClick={() => selectMainTab('admin')}
+                    >
+                      Admin
+                    </button>
+                    <button
+                      type="button"
+                      role="menuitem"
+                      className={`mobileMenuItem ${mainTab === 'profile' ? 'active' : ''}`}
+                      onClick={() => selectMainTab('profile')}
+                    >
+                      Profile
+                    </button>
+                    <button type="button" role="menuitem" className="mobileMenuItem" onClick={handleLogout}>
+                      Logout
+                    </button>
+                  </div>
+                ) : null}
+              </div>
             </div>
             {renderThemeSwitcher()}
           </div>
